@@ -9,14 +9,17 @@ export const signup = async (req, res) => {
     const hashed = await brcypt.hash(password, 10);
     const user = await User.create({ email, password: hashed, skills });
 
-    //Fire inngest event
-
-    await inngest.send({
-      name: "user/signup",
-      data: {
-        email,
-      },
-    });
+    //Fire inngest event (non-blocking)
+    try {
+      await inngest.send({
+        name: "user/signup",
+        data: {
+          email,
+        },
+      });
+    } catch (inngestError) {
+      console.log("Inngest event skipped (dev mode):", inngestError.message);
+    }
 
     const token = jwt.sign(
       { _id: user._id, role: user.role },
@@ -33,7 +36,7 @@ export const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = User.findOne({ email });
+    const user = await User.findOne({ email });
     if (!user) return res.status(401).json({ error: "User not found" });
 
     const isMatch = await brcypt.compare(password, user.password);
