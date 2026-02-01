@@ -49,7 +49,7 @@ export const getTickets = async (req, res) => {
         .populate("assignedTo", ["email", "_id"])
         .sort({ createdAt: -1 });
     } else {
-      tickets = await Ticket.find({ createdBy: user._id })
+      tickets = await Ticket.find({ createdBy: user._id.toString() })
         .select("title description status createdAt")
         .sort({ createdAt: -1 });
     }
